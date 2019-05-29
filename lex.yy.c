@@ -170,7 +170,7 @@ extern FILE *yyin, *yyout;
 	do \
 		{ \
 		/* Undo effects of setting up yytext. */ \
-        yy_size_t yyless_macro_arg = (n); \
+        int yyless_macro_arg = (n); \
         YY_LESS_LINENO(yyless_macro_arg);\
 		*yy_cp = (yy_hold_char); \
 		YY_RESTORE_YY_MORE_OFFSET \
@@ -221,7 +221,7 @@ struct yy_buffer_state
 
     int yy_bs_lineno; /**< The line count. */
     int yy_bs_column; /**< The column count. */
-    
+
 	/* Whether to try to fill the input buffer when we reach the
 	 * end of it.
 	 */
@@ -618,17 +618,20 @@ char *yytext;
 #include <stdio.h>
 #include <string.h>
 
+/*Enumeracion para los valores de las clases*/
 enum class { reserv, identifier, constant, operator, specialChar, string, directive };
 
+/*Representa un token, aunque permite el comportamiento como un nodo de lista doblemente ligada*/
 typedef struct token
 {
-	int type;
-	int idx;
-	char *data;
-	struct token *next;
+	int type; /*Clase*/
+	int idx; /*Indice*/
+	char *data; /*Dato a guardar*/
+	struct token *next; /*Apuntadores de la lista*/
 	struct token *prev;
 }Token;
 
+/*Representa los metadatos de la lista de tokens*/
 typedef struct tokenTable
 {
 	int size;
@@ -636,6 +639,7 @@ typedef struct tokenTable
 	Token *end;
 }TokenTable;
 
+/*Representa un simbolo de la tabla de simbolos*/
 typedef struct symbol
 {
 	int idx;
@@ -644,6 +648,7 @@ typedef struct symbol
 	struct symbol *prev;
 }Symbol;
 
+/*Reṕresenta la tabla de simbolos*/
 typedef struct symbolTable
 {
 	int size;
@@ -651,6 +656,7 @@ typedef struct symbolTable
 	Symbol *end;
 }SymbolTable;
 
+/*Variable singleton de la tabla de tokens y de simbolos*/
 static TokenTable *tokenTable = NULL;
 static SymbolTable *symbolTable = NULL;
 
@@ -665,7 +671,7 @@ void addSymbol(char *);
 char *deleteSymbol();
 void listSymbols();
 int findInTable(char *); 
-#line 669 "lex.yy.c"
+#line 675 "lex.yy.c"
 
 #define INITIAL 0
 
@@ -774,7 +780,7 @@ static int input (void );
 	if ( YY_CURRENT_BUFFER_LVALUE->yy_is_interactive ) \
 		{ \
 		int c = '*'; \
-		int n; \
+		size_t n; \
 		for ( n = 0; n < max_size && \
 			     (c = getc( yyin )) != EOF && c != '\n'; ++n ) \
 			buf[n] = (char) c; \
@@ -787,7 +793,7 @@ static int input (void );
 	else \
 		{ \
 		errno=0; \
-		while ( (result = (int) fread(buf, 1, (yy_size_t) max_size, yyin)) == 0 && ferror(yyin)) \
+		while ( (result = (int) fread(buf, 1, max_size, yyin))==0 && ferror(yyin)) \
 			{ \
 			if( errno != EINTR) \
 				{ \
@@ -883,9 +889,9 @@ YY_DECL
 		}
 
 	{
-#line 65 "analizador.l"
+#line 71 "analizador.l"
 
-#line 889 "lex.yy.c"
+#line 895 "lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -944,52 +950,52 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 66 "analizador.l"
+#line 72 "analizador.l"
 { add(yytext, reserv); }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 67 "analizador.l"
+#line 73 "analizador.l"
 { add(yytext, identifier); addSymbol(yytext); }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 68 "analizador.l"
+#line 74 "analizador.l"
 { add(yytext, constant); }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 69 "analizador.l"
+#line 75 "analizador.l"
 { add(yytext, operator); }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 70 "analizador.l"
+#line 76 "analizador.l"
 { add(yytext, specialChar); }
 	YY_BREAK
 case 6:
 /* rule 6 can match eol */
 YY_RULE_SETUP
-#line 71 "analizador.l"
+#line 77 "analizador.l"
 { add(yytext, string); }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 72 "analizador.l"
+#line 78 "analizador.l"
 { add(yytext, directive); }
 	YY_BREAK
 case 8:
 /* rule 8 can match eol */
 YY_RULE_SETUP
-#line 73 "analizador.l"
+#line 79 "analizador.l"
 {}
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 74 "analizador.l"
+#line 80 "analizador.l"
 ECHO;
 	YY_BREAK
-#line 993 "lex.yy.c"
+#line 999 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1134,7 +1140,7 @@ static int yy_get_next_buffer (void)
 {
     	char *dest = YY_CURRENT_BUFFER_LVALUE->yy_ch_buf;
 	char *source = (yytext_ptr);
-	yy_size_t number_to_move, i;
+	int number_to_move, i;
 	int ret_val;
 
 	if ( (yy_c_buf_p) > &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[(yy_n_chars) + 1] )
@@ -1163,7 +1169,7 @@ static int yy_get_next_buffer (void)
 	/* Try to read more data. */
 
 	/* First move last chars to start of buffer. */
-	number_to_move = (yy_size_t) ((yy_c_buf_p) - (yytext_ptr)) - 1;
+	number_to_move = (int) ((yy_c_buf_p) - (yytext_ptr) - 1);
 
 	for ( i = 0; i < number_to_move; ++i )
 		*(dest++) = *(source++);
@@ -1199,7 +1205,7 @@ static int yy_get_next_buffer (void)
 
 				b->yy_ch_buf = (char *)
 					/* Include room in for 2 EOB chars. */
-					yyrealloc((void *) b->yy_ch_buf,(yy_size_t) (b->yy_buf_size + 2)  );
+					yyrealloc((void *) b->yy_ch_buf,b->yy_buf_size + 2  );
 				}
 			else
 				/* Can't grow it, we don't own it. */
@@ -1245,10 +1251,10 @@ static int yy_get_next_buffer (void)
 	else
 		ret_val = EOB_ACT_CONTINUE_SCAN;
 
-	if ((int) ((yy_n_chars) + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {
+	if (((yy_n_chars) + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {
 		/* Extend the array by 50%, plus the number we really need. */
 		int new_size = (yy_n_chars) + number_to_move + ((yy_n_chars) >> 1);
-		YY_CURRENT_BUFFER_LVALUE->yy_ch_buf = (char *) yyrealloc((void *) YY_CURRENT_BUFFER_LVALUE->yy_ch_buf,(yy_size_t) new_size  );
+		YY_CURRENT_BUFFER_LVALUE->yy_ch_buf = (char *) yyrealloc((void *) YY_CURRENT_BUFFER_LVALUE->yy_ch_buf,new_size  );
 		if ( ! YY_CURRENT_BUFFER_LVALUE->yy_ch_buf )
 			YY_FATAL_ERROR( "out of dynamic memory in yy_get_next_buffer()" );
 	}
@@ -1509,12 +1515,12 @@ static void yy_load_buffer_state  (void)
 	if ( ! b )
 		YY_FATAL_ERROR( "out of dynamic memory in yy_create_buffer()" );
 
-	b->yy_buf_size = size;
+	b->yy_buf_size = (yy_size_t)size;
 
 	/* yy_ch_buf has to be 2 characters longer than the size given because
 	 * we need to put in 2 end-of-buffer characters.
 	 */
-	b->yy_ch_buf = (char *) yyalloc((yy_size_t) (b->yy_buf_size + 2)  );
+	b->yy_ch_buf = (char *) yyalloc(b->yy_buf_size + 2  );
 	if ( ! b->yy_ch_buf )
 		YY_FATAL_ERROR( "out of dynamic memory in yy_create_buffer()" );
 
@@ -1670,9 +1676,9 @@ static void yyensure_buffer_stack (void)
 								);
 		if ( ! (yy_buffer_stack) )
 			YY_FATAL_ERROR( "out of dynamic memory in yyensure_buffer_stack()" );
-								  
+
 		memset((yy_buffer_stack), 0, num_to_alloc * sizeof(struct yy_buffer_state*));
-				
+
 		(yy_buffer_stack_max) = num_to_alloc;
 		(yy_buffer_stack_top) = 0;
 		return;
@@ -1701,7 +1707,7 @@ static void yyensure_buffer_stack (void)
  * @param base the character buffer
  * @param size the size in bytes of the character buffer
  * 
- * @return the newly allocated buffer state object. 
+ * @return the newly allocated buffer state object.
  */
 YY_BUFFER_STATE yy_scan_buffer  (char * base, yy_size_t  size )
 {
@@ -1717,7 +1723,7 @@ YY_BUFFER_STATE yy_scan_buffer  (char * base, yy_size_t  size )
 	if ( ! b )
 		YY_FATAL_ERROR( "out of dynamic memory in yy_scan_buffer()" );
 
-	b->yy_buf_size = (int) (size - 2);	/* "- 2" to take care of EOB's */
+	b->yy_buf_size = size - 2;	/* "- 2" to take care of EOB's */
 	b->yy_buf_pos = b->yy_ch_buf = base;
 	b->yy_is_our_buffer = 0;
 	b->yy_input_file = NULL;
@@ -1800,7 +1806,7 @@ static void yynoreturn yy_fatal_error (yyconst char* msg )
 	do \
 		{ \
 		/* Undo effects of setting up yytext. */ \
-        yy_size_t yyless_macro_arg = (n); \
+        int yyless_macro_arg = (n); \
         YY_LESS_LINENO(yyless_macro_arg);\
 		yytext[yyleng] = (yy_hold_char); \
 		(yy_c_buf_p) = yytext + yyless_macro_arg; \
@@ -1817,7 +1823,7 @@ static void yynoreturn yy_fatal_error (yyconst char* msg )
  */
 int yyget_lineno  (void)
 {
-        
+    
     return yylineno;
 }
 
@@ -1990,10 +1996,11 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 74 "analizador.l"
+#line 80 "analizador.l"
 
 
-
+/*Se llena la tabla conforme las entradas coinciden con los diferentes clasificadores
+add() agrega a la tabla de tokens y addSymbolos a la de simbolos*/
 int yywrap(void)
 {
 	return 1;
@@ -2003,16 +2010,16 @@ int main(int argc, char *argv[])
 {
     if (argc == 2)
 	{
-		yyin = fopen(argv[1], "r");
+		yyin = fopen(argv[1], "r"); //Se setea al archivo a leer
 		tokenTable = createTable();
 		symbolTable = createSymbolTable();
 
-		yylex();
+		yylex(); //Se ejecuta a lex
 		printf("\n\nTabla de simbolos: \n");
 		listSymbols();
 		printf("\n\nTabla de tokens: \n");
 		listTable();
-		destroyTable();
+		destroyTable(); //Se libera la memoria
 		return 0;
 	}
     
@@ -2020,6 +2027,7 @@ int main(int argc, char *argv[])
         return -1;
 }
 
+/*Se crean las instancias*/
 TokenTable *createTable()
 {
 	return (TokenTable*)calloc(1, sizeof(TokenTable));
@@ -2030,6 +2038,7 @@ SymbolTable *createSymbolTable()
 	return (SymbolTable*)calloc(1, sizeof(SymbolTable));
 }
 
+/*Libera los nodos como si fuera una cola y regresa los valores como retorno*/
 void destroyTable()
 {
 	while (tokenTable -> size > 0)
@@ -2058,14 +2067,14 @@ void destroySymbolTable()
 
 void add(char *data, int type)
 {
-	int size = strlen(data) + 21;
-	Token *new = (Token*)calloc(1, sizeof(Token));
+	int size = strlen(data) + 21; //Se obtiene el tamaño de la cadena
+	Token *new = (Token*)calloc(1, sizeof(Token)); //Se crea nuevo nodo/token
 	
 	new -> data = (char*)calloc(size, sizeof(char));
-	new -> type = type;
+	new -> type = type; //Se agrega la informacion al token que se agregara
 	new -> idx = tokenTable -> size;
 
-	switch(type)
+	switch(type) //Se clasifica el texto mostrado segun la clase
 	{
 		case reserv:
 			strcpy(new -> data, "Palabra reservada: ");
@@ -2089,10 +2098,11 @@ void add(char *data, int type)
 			strcpy(new -> data, "Directiva: ");
 	}
 
-	strcat(new -> data, data);
+	strcat(new -> data, data); /*Se contacatena la informacion y un salto de linea*/
 	strcat(new -> data, "\n");
 
-	if (!tokenTable -> end)
+	/*Se agrega el nodo siguiendo la regla de insercion basica para nodos intermedios*/
+	if (!tokenTable -> end) 
 	{
 		tokenTable -> end = new;
 		tokenTable -> begin = tokenTable -> end;
@@ -2105,16 +2115,16 @@ void add(char *data, int type)
 		tokenTable -> end = tokenTable -> end -> next;
 	}
 
-	tokenTable -> size++;
+	tokenTable -> size++; //Se aumenta el tamaño de la tabla/lista
 }
 
-int findInTable(char *data)
+int findInTable(char *data) //Busca una cadena dentro de la lista/tabla
 {	
 	if (symbolTable -> begin)
 	{
 		Symbol *tmp = symbolTable -> begin;
 
-		while (tmp -> next)
+		while (tmp -> next) //Busca hasta encontrar el dato o llegar al final de la lista
 		{
 			if (!strncmp(tmp -> data, data, strlen(data)))
 				return -1;
@@ -2126,9 +2136,11 @@ int findInTable(char *data)
 	return 0;
 }
 
+/*Funciona igual que la tabla de tokens, con la salveldad que esta asegura que el dato no exista
+dentro de la tabla antes de agregarlo*/
 void addSymbol(char *data)
 {
-	if (!findInTable(data))
+	if (!findInTable(data)) //Si es cero permite agregar el dato
 	{
 		int size = strlen(data) + 1;
 		Symbol *new = (Symbol*)calloc(1, sizeof(Symbol));
@@ -2156,6 +2168,7 @@ void addSymbol(char *data)
 	}
 }
 
+/*Funciones list que permiten mostrar el contenido de la lista sin alterar los nodos*/
 void listTable()
 {
 	Token *tmp = tokenTable -> begin;
@@ -2178,6 +2191,8 @@ void listSymbols()
 	}
 }
 
+/*Las funciones delete obtienen una copia del valor del nodo, se libera el nodo y se manda
+la informacion del nodo como returno de la funcion*/
 char *delete()
 {
 	int size = strlen(tokenTable -> begin -> data) + 1;

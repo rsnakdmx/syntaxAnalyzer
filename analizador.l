@@ -4,17 +4,20 @@
 #include <stdio.h>
 #include <string.h>
 
+/*Enumeracion para los valores de las clases*/
 enum class { reserv, identifier, constant, operator, specialChar, string, directive };
 
+/*Representa un token, aunque permite el comportamiento como un nodo de lista doblemente ligada*/
 typedef struct token
 {
-	int type;
-	int idx;
-	char *data;
-	struct token *next;
+	int type; /*Clase*/
+	int idx; /*Indice*/
+	char *data; /*Dato a guardar*/
+	struct token *next; /*Apuntadores de la lista*/
 	struct token *prev;
 }Token;
 
+/*Representa los metadatos de la lista de tokens*/
 typedef struct tokenTable
 {
 	int size;
@@ -22,6 +25,7 @@ typedef struct tokenTable
 	Token *end;
 }TokenTable;
 
+/*Representa un simbolo de la tabla de simbolos*/
 typedef struct symbol
 {
 	int idx;
@@ -30,6 +34,7 @@ typedef struct symbol
 	struct symbol *prev;
 }Symbol;
 
+/*Reṕresenta la tabla de simbolos*/
 typedef struct symbolTable
 {
 	int size;
@@ -37,6 +42,7 @@ typedef struct symbolTable
 	Symbol *end;
 }SymbolTable;
 
+/*Variable singleton de la tabla de tokens y de simbolos*/
 static TokenTable *tokenTable = NULL;
 static SymbolTable *symbolTable = NULL;
 
@@ -72,7 +78,8 @@ ign (\/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+\/)|(\/\/.*)|(\ |\t|\n)
 {dir} { add(yytext, directive); }
 {ign} {}
 %%
-
+/*Se llena la tabla conforme las entradas coinciden con los diferentes clasificadores
+add() agrega a la tabla de tokens y addSymbolos a la de simbolos*/
 int yywrap(void)
 {
 	return 1;
@@ -82,16 +89,16 @@ int main(int argc, char *argv[])
 {
     if (argc == 2)
 	{
-		yyin = fopen(argv[1], "r");
+		yyin = fopen(argv[1], "r"); //Se setea al archivo a leer
 		tokenTable = createTable();
 		symbolTable = createSymbolTable();
 
-		yylex();
+		yylex(); //Se ejecuta a lex
 		printf("\n\nTabla de simbolos: \n");
 		listSymbols();
 		printf("\n\nTabla de tokens: \n");
 		listTable();
-		destroyTable();
+		destroyTable(); //Se libera la memoria
 		return 0;
 	}
     
@@ -99,6 +106,7 @@ int main(int argc, char *argv[])
         return -1;
 }
 
+/*Se crean las instancias*/
 TokenTable *createTable()
 {
 	return (TokenTable*)calloc(1, sizeof(TokenTable));
@@ -109,6 +117,7 @@ SymbolTable *createSymbolTable()
 	return (SymbolTable*)calloc(1, sizeof(SymbolTable));
 }
 
+/*Libera los nodos como si fuera una cola y regresa los valores como retorno*/
 void destroyTable()
 {
 	while (tokenTable -> size > 0)
@@ -137,14 +146,14 @@ void destroySymbolTable()
 
 void add(char *data, int type)
 {
-	int size = strlen(data) + 21;
-	Token *new = (Token*)calloc(1, sizeof(Token));
+	int size = strlen(data) + 21; //Se obtiene el tamaño de la cadena
+	Token *new = (Token*)calloc(1, sizeof(Token)); //Se crea nuevo nodo/token
 	
 	new -> data = (char*)calloc(size, sizeof(char));
-	new -> type = type;
+	new -> type = type; //Se agrega la informacion al token que se agregara
 	new -> idx = tokenTable -> size;
 
-	switch(type)
+	switch(type) //Se clasifica el texto mostrado segun la clase
 	{
 		case reserv:
 			strcpy(new -> data, "Palabra reservada: ");
@@ -168,10 +177,11 @@ void add(char *data, int type)
 			strcpy(new -> data, "Directiva: ");
 	}
 
-	strcat(new -> data, data);
+	strcat(new -> data, data); /*Se contacatena la informacion y un salto de linea*/
 	strcat(new -> data, "\n");
 
-	if (!tokenTable -> end)
+	/*Se agrega el nodo siguiendo la regla de insercion basica para nodos intermedios*/
+	if (!tokenTable -> end) 
 	{
 		tokenTable -> end = new;
 		tokenTable -> begin = tokenTable -> end;
@@ -184,16 +194,16 @@ void add(char *data, int type)
 		tokenTable -> end = tokenTable -> end -> next;
 	}
 
-	tokenTable -> size++;
+	tokenTable -> size++; //Se aumenta el tamaño de la tabla/lista
 }
 
-int findInTable(char *data)
+int findInTable(char *data) //Busca una cadena dentro de la lista/tabla
 {	
 	if (symbolTable -> begin)
 	{
 		Symbol *tmp = symbolTable -> begin;
 
-		while (tmp -> next)
+		while (tmp -> next) //Busca hasta encontrar el dato o llegar al final de la lista
 		{
 			if (!strncmp(tmp -> data, data, strlen(data)))
 				return -1;
@@ -205,9 +215,11 @@ int findInTable(char *data)
 	return 0;
 }
 
+/*Funciona igual que la tabla de tokens, con la salveldad que esta asegura que el dato no exista
+dentro de la tabla antes de agregarlo*/
 void addSymbol(char *data)
 {
-	if (!findInTable(data))
+	if (!findInTable(data)) //Si es cero permite agregar el dato
 	{
 		int size = strlen(data) + 1;
 		Symbol *new = (Symbol*)calloc(1, sizeof(Symbol));
@@ -235,6 +247,7 @@ void addSymbol(char *data)
 	}
 }
 
+/*Funciones list que permiten mostrar el contenido de la lista sin alterar los nodos*/
 void listTable()
 {
 	Token *tmp = tokenTable -> begin;
@@ -257,6 +270,8 @@ void listSymbols()
 	}
 }
 
+/*Las funciones delete obtienen una copia del valor del nodo, se libera el nodo y se manda
+la informacion del nodo como returno de la funcion*/
 char *delete()
 {
 	int size = strlen(tokenTable -> begin -> data) + 1;
