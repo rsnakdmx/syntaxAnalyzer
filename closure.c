@@ -11,7 +11,7 @@ struct closure
 void block(struct closure *env)
 {
   	env -> x += 1;
-  	printf("block: x is %d\n", env->x);
+  	printf("block: x is %d\n", env -> x);
 }
 
 struct closure *foo(int x)
@@ -26,7 +26,7 @@ struct closure *foo(int x)
   return closure;
 }
 
-int main(int argc, char *argv[])
+int main(void)
 {
   struct closure * c = foo(5);
 

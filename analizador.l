@@ -1,5 +1,6 @@
 /*Mini proyecto Equipo: Jose Enrique Angeles Avalos Juan Frias Carrillo Miguel Angel Rubi Rico*/
 %{ 
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -8,6 +9,7 @@ enum class { reserv, identifier, constant, operator, specialChar, string, direct
 typedef struct token
 {
 	int type;
+	int idx;
 	char *data;
 	struct token *next;
 	struct token *prev;
@@ -20,13 +22,35 @@ typedef struct tokenTable
 	Token *end;
 }TokenTable;
 
+typedef struct symbol
+{
+	int idx;
+	char *data;
+	struct symbol *next;
+	struct symbol *prev;
+}Symbol;
+
+typedef struct symbolTable
+{
+	int size;
+	Symbol *begin;
+	Symbol *end;
+}SymbolTable;
+
 static TokenTable *tokenTable = NULL;
+static SymbolTable *symbolTable = NULL;
 
 TokenTable *createTable();
+SymbolTable *createSymbolTable();
 void destroyTable();
+void destroySymbolTable();
 void add(char *, int);
 char *delete();
 void listTable();
+void addSymbol(char *);
+char *deleteSymbol();
+void listSymbols();
+int findInTable(char *); 
 %} 
 
 pr (auto|break|case|char|const|continue|default|do|double|else|enum|extern|float|for|goto|if|int|long|register|return|short|signed|sizeof|static|struct|typedef|union|unsigned|void|volatile|while)
@@ -40,7 +64,7 @@ ign (\/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+\/)|(\/\/.*)|(\ |\t|\n)
 
 %%
 {pr} { add(yytext, reserv); }
-{id} { add(yytext, identifier); }
+{id} { add(yytext, identifier); addSymbol(yytext); }
 {cte} { add(yytext, constant); }
 {op} { add(yytext, operator); }
 {cs} { add(yytext, specialChar); }
@@ -60,8 +84,12 @@ int main(int argc, char *argv[])
 	{
 		yyin = fopen(argv[1], "r");
 		tokenTable = createTable();
+		symbolTable = createSymbolTable();
 
 		yylex();
+		printf("\n\nTabla de simbolos: \n");
+		listSymbols();
+		printf("\n\nTabla de tokens: \n");
 		listTable();
 		destroyTable();
 		return 0;
@@ -74,6 +102,11 @@ int main(int argc, char *argv[])
 TokenTable *createTable()
 {
 	return (TokenTable*)calloc(1, sizeof(TokenTable));
+}
+
+SymbolTable *createSymbolTable()
+{
+	return (SymbolTable*)calloc(1, sizeof(SymbolTable));
 }
 
 void destroyTable()
@@ -89,13 +122,27 @@ void destroyTable()
 	tokenTable = NULL;
 }
 
+void destroySymbolTable()
+{
+	while (symbolTable -> size > 0)
+	{
+		char *str = deleteSymbol();
+		free(str);
+		str = NULL;
+	}
+
+	free(symbolTable);
+	symbolTable = NULL;
+}
+
 void add(char *data, int type)
 {
-	int size = tokenTable -> size + 20;
+	int size = strlen(data) + 21;
 	Token *new = (Token*)calloc(1, sizeof(Token));
 	
 	new -> data = (char*)calloc(size, sizeof(char));
 	new -> type = type;
+	new -> idx = tokenTable -> size;
 
 	switch(type)
 	{
@@ -140,13 +187,72 @@ void add(char *data, int type)
 	tokenTable -> size++;
 }
 
+int findInTable(char *data)
+{	
+	if (symbolTable -> begin)
+	{
+		Symbol *tmp = symbolTable -> begin;
+
+		while (tmp -> next)
+		{
+			if (!strncmp(tmp -> data, data, strlen(data)))
+				return -1;
+
+			tmp = tmp -> next;
+		}
+	}
+
+	return 0;
+}
+
+void addSymbol(char *data)
+{
+	if (!findInTable(data))
+	{
+		int size = strlen(data) + 1;
+		Symbol *new = (Symbol*)calloc(1, sizeof(Symbol));
+
+		new -> data = (char*)calloc(size, sizeof(char));
+		new -> idx = symbolTable -> size;
+
+		strcpy(new -> data, data);
+		strcat(new -> data, "\n");
+
+		if (!symbolTable -> end)
+		{
+			symbolTable -> end = new;
+			symbolTable -> begin = symbolTable -> end;
+		}
+	
+		else
+		{
+			new -> prev = symbolTable -> end;
+			symbolTable -> end -> next = new;
+			symbolTable -> end = symbolTable -> end -> next;
+		}
+
+		symbolTable -> size++;
+	}
+}
+
 void listTable()
 {
 	Token *tmp = tokenTable -> begin;
 
 	while (tmp -> next)
 	{
-		printf("%s", tmp -> data);
+		printf("%d %s", tmp -> idx, tmp -> data);
+		tmp = tmp -> next;
+	}
+}
+
+void listSymbols()
+{
+	Symbol *tmp = symbolTable -> begin;
+
+	while (tmp -> next)
+	{
+		printf("%d %s", tmp -> idx, tmp -> data);
 		tmp = tmp -> next;
 	}
 }
@@ -160,6 +266,20 @@ char *delete()
 	strncpy(data, tokenTable -> begin -> data, size);
 	tokenTable -> begin = tokenTable -> begin -> next;
 	tokenTable -> size--;
+	free(tmp);
+
+	return data;
+}
+
+char *deleteSymbol()
+{
+	int size = strlen(symbolTable -> begin -> data) + 1;
+	char *data = (char*)calloc(size, sizeof(char));
+	Symbol *tmp = symbolTable -> begin;
+
+	strncpy(data, symbolTable -> begin -> data, size);
+	symbolTable -> begin = symbolTable -> begin -> next;
+	symbolTable -> size--;
 	free(tmp);
 
 	return data;
